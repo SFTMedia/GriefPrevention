@@ -36,6 +36,7 @@ import org.bukkit.entity.minecart.HopperMinecart;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.block.BlockDispenseEvent;
@@ -50,6 +51,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.inventory.InventoryPickupItemEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -852,5 +854,27 @@ public class BlockEventHandler implements Listener
 	            event.setCancelled(true);
 	        }
 	    }
+	}
+	
+	//when a player places multiple blocks...
+	@EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    public void onPlayerInteract (PlayerInteractEvent event)
+	{
+		Player player = event.getPlayer();
+
+		//Just block Right clicking blocks
+		if(!event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) return;
+	    
+	    //don't track in worlds where claims are not enabled
+        if(!GriefPrevention.instance.claimsEnabledForWorld(event.getClickedBlock().getWorld())) return;
+        
+        //make sure the player is allowed to build at the location
+		String noBuildReason = GriefPrevention.instance.allowBuild(player, event.getClickedBlock().getLocation(), event.getClickedBlock().getType());
+		if(noBuildReason != null)
+		{
+			GriefPrevention.sendMessage(player, TextMode.Err, noBuildReason);
+			event.setCancelled(true);
+			return;
+		}
 	}
 }
